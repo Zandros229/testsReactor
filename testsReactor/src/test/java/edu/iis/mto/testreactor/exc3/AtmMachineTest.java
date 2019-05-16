@@ -77,13 +77,44 @@ public class AtmMachineTest {
         Assertions.assertThrows(InsufficientFundsException.class,()->atmMachine.withdraw(money,card).getValue());
     }
     @Test
-    public void Eror(){
+    public void ShouldInvokeCardAutorizationExceptionWhenCardProviderServiceDOntFindTHisCardOrItsBrokenTest(){
+        money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+
+        Assertions.assertThrows(CardAuthorizationException.class,()->atmMachine.withdraw(money,card).getValue());
+    }
+
+    @Test
+    public void ShouldInvokeWrongMoneyAmountExceptionWhenAmountOfMoneyToWithDrawIsLowerThanZeroTest(){
+        money=Money.builder().withAmount(-50).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+
+        Assertions.assertThrows(WrongMoneyAmountException.class,()->atmMachine.withdraw(money,card).getValue());
+    }
+
+    @Test
+    public void ShouldInvokeWrongMoneyAmountExceptionWhenAmountOfMoneyToWithDrawIsThanZeroTest(){
+        money=Money.builder().withAmount(0).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+
+        Assertions.assertThrows(WrongMoneyAmountException.class,()->atmMachine.withdraw(money,card).getValue());
+    }
+
+    @Test
+    public void ShouldInvokeMethodAuthorizeOnCardProviderServiceWhenMakingWithDrawTest(){
         money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
         card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
         authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
         when(cardProviderService.authorize(card)).thenReturn(java.util.Optional.ofNullable(authenticationToken));
+        when(bankService.charge(authenticationToken,money)).thenReturn(Boolean.TRUE);
+        when(moneyDepot.releaseBanknotes((List<Banknote>)notNull())).thenReturn(Boolean.TRUE);
+        atmMachine.withdraw(money,card);
 
-        Assertions.assertThrows(InsufficientFundsException.class,()->atmMachine.withdraw(money,card).getValue());
+
+        verify(cardProviderService,times(1)).authorize(card);
     }
 
 }
