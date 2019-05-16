@@ -104,7 +104,7 @@ public class AtmMachineTest {
     }
 
     @Test
-    public void ShouldInvokeMethodAuthorizeOnCardProviderServiceWhenMakingWithDrawTest(){
+    public void ShouldInvokeOnceMethodAuthorizeOnCardProviderServiceWhenMakingWithDrawTest(){
         money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
         card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
         authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
@@ -115,6 +115,48 @@ public class AtmMachineTest {
 
 
         verify(cardProviderService,times(1)).authorize(card);
+    }
+
+    @Test
+    public void ShouldInvokeOnceMethodStartTransactionOnBankServiceWhenMakingWithDrawTest(){
+        money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+        when(cardProviderService.authorize(card)).thenReturn(java.util.Optional.ofNullable(authenticationToken));
+        when(bankService.charge(authenticationToken,money)).thenReturn(Boolean.TRUE);
+        when(moneyDepot.releaseBanknotes((List<Banknote>)notNull())).thenReturn(Boolean.TRUE);
+        atmMachine.withdraw(money,card);
+
+
+        verify(bankService,times(1)).startTransaction(authenticationToken);
+    }
+
+    @Test
+    public void ShouldInvokeOnceMethodCommitOnBankServiceWhenMakingWithDrawTest(){
+        money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+        when(cardProviderService.authorize(card)).thenReturn(java.util.Optional.ofNullable(authenticationToken));
+        when(bankService.charge(authenticationToken,money)).thenReturn(Boolean.TRUE);
+        when(moneyDepot.releaseBanknotes((List<Banknote>)notNull())).thenReturn(Boolean.TRUE);
+        atmMachine.withdraw(money,card);
+
+
+        verify(bankService,times(1)).commit(authenticationToken);
+    }
+
+    @Test
+    public void ShouldInvokeOnceMethodChargeOnBankServiceWhenMakingWithDrawTest(){
+        money=Money.builder().withAmount(200).withCurrency(Currency.PL).build();
+        card=Card.builder().withCardNumber("12345").withPinNumber(1234).build();
+        authenticationToken=AuthenticationToken.builder().withAuthorizationCode(1234).withUserId("12345").build();
+        when(cardProviderService.authorize(card)).thenReturn(java.util.Optional.ofNullable(authenticationToken));
+        when(bankService.charge(authenticationToken,money)).thenReturn(Boolean.TRUE);
+        when(moneyDepot.releaseBanknotes((List<Banknote>)notNull())).thenReturn(Boolean.TRUE);
+        atmMachine.withdraw(money,card);
+
+
+        verify(bankService,times(1)).charge(authenticationToken,money);
     }
 
 }
